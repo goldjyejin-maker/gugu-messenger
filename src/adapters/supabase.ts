@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { AdapterEvent, Attachment, Channel, Message, MessengerAdapter, SignInParams, User } from '../types';
+import { MAX_CATEGORIES } from '../types';
+import type { AdapterEvent, Attachment, Category, Channel, Message, MessengerAdapter, SignInParams, User } from '../types';
 import { extractMentions, uid } from '../util';
 
 interface Row {
@@ -63,17 +64,35 @@ export class SupabaseAdapter implements MessengerAdapter {
 
   async listChannels() {
     this.need();
-    const { data, error } = await this.sb.from('channels').select('id,name,kind,channel_members(user_id)').order('created_at');
+    const { data, error } = await this.sb.from('channels').select('id,name,kind,category_id,channel_members(user_id)').order('created_at');
     if (error) throw new Error(error.message);
-    return (data as { id: string; name: string; kind: 'channel' | 'dm'; channel_members: { user_id: string }[] }[])
-      .map(c => ({ id: c.id, name: c.name, kind: c.kind, memberIds: c.channel_members.map(m => m.user_id) } as Channel));
+    return (data as { id: string; name: string; kind: 'channel' | 'dm'; category_id: string | null; channel_members: { user_id: string }[] }[])
+      .map(c => ({ id: c.id, name: c.name, kind: c.kind, categoryId: c.category_id, memberIds: c.channel_members.map(m => m.user_id) } as Channel));
   }
 
-  async createChannel(name: string, memberIds: string[]) {
-    const { data, error } = await this.sb.rpc('create_channel', { p_name: name, p_members: memberIds });
+  async createChannel(name: string, memberIds: string[], categoryId: string | null = null) {
+    const { data, error } = await this.sb.rpc('create_channel', { p_name: name, p_members: memberIds, p_category: categoryId });
     if (error) throw new Error(error.message);
     const list = await this.listChannels();
     return list.find(c => c.id === data)!;
+  }
+
+  async listCategories() {
+    const { data, error } = await this.sb.from('categories').select('id,name').order('position').order('created_at');
+    if (error) throw new Error(error.message);
+    return data as Category[];
+  }
+  async createCategory(name: string) {
+    const { error } = await this.sb.rpc('create_category', { p_name: name });
+    if (error) throw new Error(error.message.includes('max_categories') ? `카테고리는 최대 ${MAX_CATEGORIES}개까지 만들 수 있어요` : error.message);
+  }
+  async deleteCategory(id: string) {
+    const { error } = await this.sb.rpc('delete_category', { p_id: id });
+    if (error) throw new Error(error.message);
+  }
+  async setChannelCategory(channelId: string, categoryId: string | null) {
+    const { error } = await this.sb.rpc('set_channel_category', { p_channel: channelId, p_category: categoryId });
+    if (error) throw new Error(error.message);
   }
   async openDm(userId: string) {
     const { data, error } = await this.sb.rpc('open_dm', { p_other: userId });
@@ -163,6 +182,8 @@ export class SupabaseAdapter implements MessengerAdapter {
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages' }, p => cb({ type: 'reaction', messageId: (p.new as Row).id }))
       .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'messages' }, () => cb({ type: 'reaction', messageId: '' }))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'channel_members' }, () => cb({ type: 'channels' }))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'channels' }, () => cb({ type: 'channels' }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'categories' }, () => cb({ type: 'categories' }))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => cb({ type: 'users' }))
       .subscribe();
     return () => { void this.sb.removeChannel(ch); };

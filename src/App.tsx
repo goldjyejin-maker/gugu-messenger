@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createAdapter } from './adapters';
-import type { Channel, Message, User } from './types';
+import type { Category, Channel, Message, User } from './types';
 import Login from './components/Login';
 import Sidebar, { dmName } from './components/Sidebar';
 import Chat from './components/Chat';
@@ -16,6 +16,7 @@ export default function App() {
   const [me, setMe] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [unread, setUnread] = useState<Record<string, number>>({});
   const [activeId, setActiveId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -34,8 +35,8 @@ export default function App() {
 
   const refresh = useCallback(async () => {
     try {
-      const [u, c, n] = await Promise.all([adapter.listUsers(), adapter.listChannels(), adapter.unreadCounts()]);
-      setUsers(u); setChannels(c);
+      const [u, c, n, cats] = await Promise.all([adapter.listUsers(), adapter.listChannels(), adapter.unreadCounts(), adapter.listCategories()]);
+      setUsers(u); setChannels(c); setCategories(cats);
       const cur = activeRef.current;
       if (cur && c.some(x => x.id === cur)) {
         setMessages(await adapter.listMessages(cur));
@@ -87,11 +88,14 @@ export default function App() {
 
   return (
     <div className="app">
-      <Sidebar me={me} users={users} channels={channels} unread={unread} activeId={activeId} open={navOpen}
+      <Sidebar me={me} users={users} channels={channels} categories={categories} unread={unread} activeId={activeId} open={navOpen}
         mode={adapter.kind === 'mock' ? 'demo' : 'live'}
         onSelect={select}
         onDm={async id => { try { const c = await adapter.openDm(id); await refresh(); select(c.id); } catch (e) { fail(e); } }}
-        onCreate={async (n, ids) => { try { const c = await adapter.createChannel(n, ids); await refresh(); select(c.id); } catch (e) { fail(e); } }}
+        onCreate={async (n, ids, cat) => { try { const c = await adapter.createChannel(n, ids, cat); await refresh(); select(c.id); } catch (e) { fail(e); } }}
+        onCreateCategory={async n => { try { await adapter.createCategory(n); await refresh(); } catch (e) { fail(e); } }}
+        onDeleteCategory={async id => { try { await adapter.deleteCategory(id); await refresh(); } catch (e) { fail(e); } }}
+        onMove={async (cid, cat) => { try { await adapter.setChannelCategory(cid, cat); await refresh(); } catch (e) { fail(e); } }}
         onSignOut={async () => { await adapter.signOut(); setMe(null); setActiveId(null); setChannels([]); setMessages([]); setNavOpen(!!mq?.matches); }} />
       {navOpen && <div className="scrim" onClick={() => setNavOpen(false)} />}
       <InstallTip />

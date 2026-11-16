@@ -1,4 +1,5 @@
-import type { AdapterEvent, Attachment, Channel, Message, MessengerAdapter, SignInParams, User } from '../types';
+import { MAX_CATEGORIES } from '../types';
+import type { AdapterEvent, Attachment, Category, Channel, Message, MessengerAdapter, SignInParams, User } from '../types';
 import { extractMentions, uid } from '../util';
 
 /**
@@ -9,6 +10,7 @@ import { extractMentions, uid } from '../util';
  */
 interface State {
   users: User[];
+  categories?: Category[];
   channels: Channel[];
   messages: Message[];
   reads: Record<string, Record<string, number>>; // userId -> channelId -> 마지막으로 읽은 시각
@@ -105,12 +107,38 @@ export class MockAdapter implements MessengerAdapter {
     this.state = load();
     return this.state.channels.filter(c => c.memberIds.includes(me.id));
   }
-  async createChannel(name: string, memberIds: string[]) {
+  async createChannel(name: string, memberIds: string[], categoryId: string | null = null) {
     const me = this.need();
-    const c: Channel = { id: uid(), name: name.trim(), kind: 'channel', memberIds: [...new Set([me.id, ...memberIds])] };
+    this.state = load();
+    const c: Channel = { id: uid(), name: name.trim(), kind: 'channel', memberIds: [...new Set([me.id, ...memberIds])], categoryId };
     this.state.channels.push(c);
     this.emit({ type: 'channels' });
     return c;
+  }
+
+  async listCategories() { this.state = load(); return [...(this.state.categories ?? [])]; }
+  async createCategory(name: string) {
+    this.need();
+    this.state = load();
+    const cats = (this.state.categories ??= []);
+    if (!name.trim()) throw new Error('카테고리 이름을 입력하세요');
+    if (cats.length >= MAX_CATEGORIES) throw new Error(`카테고리는 최대 ${MAX_CATEGORIES}개까지 만들 수 있어요`);
+    cats.push({ id: uid(), name: name.trim() });
+    this.emit({ type: 'categories' });
+  }
+  async deleteCategory(id: string) {
+    this.need();
+    this.state = load();
+    this.state.categories = (this.state.categories ?? []).filter(c => c.id !== id);
+    this.state.channels.forEach(c => { if (c.categoryId === id) c.categoryId = null; });
+    this.emit({ type: 'categories' });
+  }
+  async setChannelCategory(channelId: string, categoryId: string | null) {
+    this.need();
+    this.state = load();
+    const c = this.state.channels.find(x => x.id === channelId);
+    if (c) c.categoryId = categoryId;
+    this.emit({ type: 'channels' });
   }
   async openDm(userId: string) {
     const me = this.need();

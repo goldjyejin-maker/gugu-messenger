@@ -1,9 +1,13 @@
 export interface User { id: string; name: string }
+export interface Category { id: string; name: string }
+export const MAX_CATEGORIES = 3;
 export interface Channel {
   id: string;
   name: string;
   kind: 'channel' | 'dm';
   memberIds: string[];
+  /** 소속 카테고리 (없으면 '카테고리 없음' 영역에 표시) */
+  categoryId?: string | null;
 }
 export interface Attachment { id: string; name: string; size: number; type: string; url: string }
 export interface Message {
@@ -21,6 +25,7 @@ export type AdapterEvent =
   | { type: 'message'; message: Message }
   | { type: 'reaction'; messageId: string }
   | { type: 'channels' }
+  | { type: 'categories' }
   | { type: 'users' }
   | { type: 'read' };
 
@@ -39,8 +44,13 @@ export interface MessengerAdapter {
 
   listUsers(): Promise<User[]>;
   listChannels(): Promise<Channel[]>;
-  createChannel(name: string, memberIds: string[]): Promise<Channel>;
+  createChannel(name: string, memberIds: string[], categoryId?: string | null): Promise<Channel>;
   openDm(userId: string): Promise<Channel>;
+
+  listCategories(): Promise<Category[]>;
+  createCategory(name: string): Promise<void>;       // 최대 MAX_CATEGORIES개
+  deleteCategory(id: string): Promise<void>;         // 속한 채널은 '카테고리 없음'으로 이동
+  setChannelCategory(channelId: string, categoryId: string | null): Promise<void>;
 
   listMessages(channelId: string): Promise<Message[]>;
   sendMessage(channelId: string, text: string, files: File[]): Promise<void>;

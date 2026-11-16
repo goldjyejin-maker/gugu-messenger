@@ -182,3 +182,54 @@ body { overscroll-behavior: none; }
   .login-card button.primary { padding: 14px; font-size: 16px; }
   .toast { bottom: calc(24px + env(safe-area-inset-bottom)); }
 }
+
+/* ───── 카테고리 사이드바 ───── */
+.sidebar { overflow: hidden; }
+.scrollarea { flex: 1; overflow-y: auto; min-height: 0; padding-bottom: 8px; }
+.cat-head { cursor: pointer; user-select: none; gap: 6px; padding-top: 12px; }
+.cat-head .caret { width: 12px; color: #9fb9b1; }
+.cat-head .ttl { color: #e9f3ef; font-weight: 700; font-size: 13px; }
+.cat-head .spacer { flex: 1; }
+.cat-head .del { font-size: 16px; opacity: .55; }
+.cat-head .del:hover { opacity: 1; color: #ffb4a8; }
+.sidebar li { position: relative; gap: 6px; }
+.sidebar li .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sidebar li .more { opacity: 0; color: inherit; font-size: 18px; padding: 0 6px; border-radius: 6px; line-height: 1; }
+.sidebar li:hover .more, .sidebar li.active .more { opacity: .8; }
+.sidebar li .more:hover { background: rgb(255 255 255 / .15); opacity: 1; }
+.moremenu { position: absolute; right: 8px; top: 100%; z-index: 30; background: #fff; color: var(--text); border-radius: 10px; box-shadow: 0 8px 24px rgb(0 0 0 / .25); padding: 6px; min-width: 170px; }
+.moremenu .mh { font-size: 11px; color: var(--muted); padding: 4px 8px; }
+.moremenu button { display: block; width: 100%; text-align: left; padding: 8px 10px; border-radius: 6px; font-size: 14px; }
+.moremenu button:hover:not(:disabled) { background: var(--brand-l); }
+.moremenu button:disabled { color: #aab5b1; cursor: default; }
+.cat-empty { padding: 4px 16px 8px 34px; font-size: 12px; color: #7f9a91; }
+.addcat { padding: 10px 16px 4px; }
+.addcat-btn { width: 100%; padding: 8px 10px; border: 1px dashed rgb(255 255 255 / .3); border-radius: 8px; color: #cfe2db; font-size: 13px; text-align: left; }
+.addcat-btn:hover:not(:disabled) { background: rgb(255 255 255 / .08); }
+.addcat-btn:disabled { opacity: .45; cursor: default; }
+.addcat-btn small { color: #9fb9b1; }
+.addcat form { display: flex; flex-wrap: wrap; gap: 6px; }
+.addcat input { flex: 1 1 100%; padding: 8px 10px; border-radius: 6px; border: 0; }
+.ghostbtn { color: #cfe2db; font-size: 13px; padding: 6px 10px; border-radius: 6px; }
+.ghostbtn:hover { background: rgb(255 255 255 / .1); }
+.create .btns { display: flex; gap: 6px; }
+
+/* ───── @ 호출 ───── */
+.composer button.at { font-weight: 800; color: var(--brand); border: 1px solid var(--line); border-radius: 10px; min-width: 42px; height: 42px; }
+.suggest { min-width: 200px; max-height: 280px; overflow-y: auto; }
+.suggest li { display: flex; align-items: center; gap: 8px; }
+.suggest li.on { background: var(--brand-l); }
+.suggest li.sh { font-size: 11px; color: var(--muted); cursor: default; padding: 6px 14px 2px; }
+.suggest li.sh:hover { background: none; }
+.avatar.sm { width: 24px; height: 24px; font-size: 12px; border-radius: 8px; }
+
+@media (max-width: 760px) {
+  .cat-head { padding: 16px 16px 8px; }
+  .cat-head .ttl { font-size: 16px; }
+  .sidebar li .more { opacity: .7; font-size: 24px; padding: 0 10px; }
+  .addcat-btn { padding: 14px; font-size: 15px; }
+  .addcat input { font-size: 16px; }
+  .composer button.at { min-width: 46px; height: 46px; font-size: 20px; }
+  .moremenu { right: 12px; min-width: 200px; }
+  .moremenu button { padding: 12px; font-size: 16px; }
+}

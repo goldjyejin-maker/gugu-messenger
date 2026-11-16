@@ -44,8 +44,18 @@ export default function Chat({ me, users, memberIds, title, messages, onSend, on
     if (focusId) document.getElementById('m-' + focusId)?.scrollIntoView({ block: 'center' });
   }, [focusId, messages]);
 
+  const taRef = useRef<HTMLTextAreaElement>(null);
+  const [sugIdx, setSugIdx] = useState(0);
   const at = /(?:^|\s)@([^\s@]*)$/.exec(text);
-  const suggest = at ? members.filter(u => u.name.includes(at[1])).slice(0, 5) : [];
+  const suggest = at ? members.filter(u => u.name.includes(at[1])).slice(0, 8) : [];
+  const idx = Math.min(sugIdx, Math.max(suggest.length - 1, 0));
+  const pick = (u: User) => { setText(text.replace(/@[^\s@]*$/, '@' + u.name + ' ')); setSugIdx(0); taRef.current?.focus(); };
+  // 입력창 옆 @ 버튼: 커서 위치와 상관없이 맨 끝에 @ 를 붙여 선생님 목록을 띄운다
+  const startMention = () => {
+    setText(t => (t && !/\s$/.test(t) ? t + ' @' : t + '@'));
+    setSugIdx(0);
+    taRef.current?.focus();
+  };
 
   function addFiles(list: FileList | File[]) {
     const ok: File[] = [];
@@ -107,8 +117,11 @@ export default function Chat({ me, users, memberIds, title, messages, onSend, on
 
       <div className="composer">
         {suggest.length > 0 && at && (
-          <ul className="suggest">{suggest.map(u => (
-            <li key={u.id} onMouseDown={e => { e.preventDefault(); setText(text.replace(/@[^\s@]*$/, '@' + u.name + ' ')); }}>@{u.name}</li>))}
+          <ul className="suggest">
+            <li className="sh">호출할 선생님을 고르세요</li>
+            {suggest.map((u, i) => (
+              <li key={u.id} className={i === idx ? 'on' : ''} onMouseDown={e => { e.preventDefault(); pick(u); }}>
+                <span className="avatar sm">{u.name.slice(0, 1)}</span> @{u.name}</li>))}
           </ul>
         )}
         {files.length > 0 && (
@@ -121,10 +134,19 @@ export default function Chat({ me, users, memberIds, title, messages, onSend, on
         <div className="row">
           <button className="icon" title="파일 첨부" onClick={() => fileRef.current?.click()}>📎</button>
           <input ref={fileRef} type="file" multiple hidden onChange={e => { if (e.target.files) addFiles(e.target.files); e.target.value = ''; }} />
-          <textarea rows={1} value={text} placeholder={`${title}에 메시지 보내기 (@로 멘션, Shift+Enter 줄바꿈)`}
-            onChange={e => setText(e.target.value)}
+          <button className="icon at" title="선생님 호출(@)" onClick={startMention}>@</button>
+          <textarea ref={taRef} rows={1} value={text} placeholder={`${title}에 메시지 보내기 (@로 선생님 호출)`}
+            onChange={e => { setText(e.target.value); setSugIdx(0); }}
             onPaste={e => { if (e.clipboardData.files.length) { e.preventDefault(); addFiles(e.clipboardData.files); } }}
-            onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); void send(); } }} />
+            onKeyDown={e => {
+              if (e.nativeEvent.isComposing) return;
+              if (suggest.length) {
+                if (e.key === 'ArrowDown') { e.preventDefault(); setSugIdx((idx + 1) % suggest.length); return; }
+                if (e.key === 'ArrowUp') { e.preventDefault(); setSugIdx((idx - 1 + suggest.length) % suggest.length); return; }
+                if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); pick(suggest[idx]); return; }
+              }
+              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send(); }
+            }} />
           <button className="primary" disabled={sending} onClick={() => void send()}>{sending ? '…' : '보내기'}</button>
         </div>
       </div>

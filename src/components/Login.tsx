@@ -21,7 +21,7 @@ export default function Login({ adapter, onDone }: { adapter: MessengerAdapter; 
   return (
     <div className="login-wrap">
       <form className="login-card" onSubmit={submit}>
-        <div className="logo">구구</div>
+        <img className="login-logo" src="./logo.png" alt="구구메신저" />
         <h1>구구메신저</h1>
         <p className="muted">선생님들을 위한 업무 메신저</p>
         {(!email || signUp) && (

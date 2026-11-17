@@ -34,6 +34,7 @@ export default function Chat({ me, users, memberIds, title, messages, onSend, on
   const [sending, setSending] = useState(false);
   const [drag, setDrag] = useState(false);
   const [sel, setSel] = useState<string | null>(null); // 터치: 메시지를 탭하면 반응/삭제 버튼 표시
+  const [view, setView] = useState<{ list: string[]; i: number } | null>(null); // 사진 크게 보기
   const listRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const byId = useMemo(() => new Map(users.map(u => [u.id, u])), [users]);
@@ -96,9 +97,24 @@ export default function Chat({ me, users, memberIds, title, messages, onSend, on
                 <div className="bubble">
                   {!compact && <div className="meta"><b>{byId.get(m.userId)?.name ?? '알 수 없음'}</b><time>{fmtTime(m.createdAt)}</time></div>}
                   {m.text && <div className="text"><Body text={m.text} users={users} /></div>}
-                  {m.attachments.map(a => a.type.startsWith('image/') && a.url
-                    ? <a key={a.id} href={a.url} target="_blank" rel="noopener noreferrer"><img className="thumb" src={a.url} alt={a.name} loading="lazy" /></a>
-                    : <a key={a.id} className="file" href={a.url} download={a.name} target="_blank" rel="noopener noreferrer">📎 {a.name} <small>{fmtSize(a.size)}</small></a>)}
+                  {(() => {
+                    const isImg = (a: Message['attachments'][number]) => a.type.startsWith('image/') && !!a.url;
+                    const imgs = m.attachments.filter(isImg);
+                    const shown = imgs.slice(0, 4), more = imgs.length - shown.length;
+                    return <>
+                      {imgs.length > 0 && (
+                        <div className={'gallery g' + shown.length} onClick={e => e.stopPropagation()}>
+                          {shown.map((a, i) => (
+                            <button key={a.id} className="tile" aria-label={a.name} onClick={() => setView({ list: imgs.map(x => x.url!), i })}>
+                              <img src={a.url} alt={a.name} loading="lazy" />
+                              {more > 0 && i === shown.length - 1 && <span className="more-badge">+{more}</span>}
+                            </button>))}
+                        </div>
+                      )}
+                      {m.attachments.filter(a => !isImg(a)).map(a =>
+                        <a key={a.id} className="file" href={a.url} download={a.name} target="_blank" rel="noopener noreferrer">📎 {a.name} <small>{fmtSize(a.size)}</small></a>)}
+                    </>;
+                  })()}
                   <div className="reacts">
                     {Object.entries(m.reactions).map(([e, ids]) => (
                       <button key={e} className={ids.includes(me.id) ? 'on' : ''} onClick={() => onReact(m.id, e)}
@@ -114,6 +130,19 @@ export default function Chat({ me, users, memberIds, title, messages, onSend, on
           );
         })}
       </div>
+
+      {view && (
+        <div className="lightbox" onClick={() => setView(null)}>
+          <img src={view.list[view.i]} alt="" onClick={e => e.stopPropagation()} />
+          <button className="lb-close" aria-label="닫기">✕</button>
+          {view.list.length > 1 && <>
+            <button className="lb-nav prev" aria-label="이전" onClick={e => { e.stopPropagation(); setView({ ...view, i: (view.i - 1 + view.list.length) % view.list.length }); }}>‹</button>
+            <button className="lb-nav next" aria-label="다음" onClick={e => { e.stopPropagation(); setView({ ...view, i: (view.i + 1) % view.list.length }); }}>›</button>
+            <span className="lb-count">{view.i + 1} / {view.list.length}</span>
+          </>}
+          <a className="lb-open" href={view.list[view.i]} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}>원본 열기</a>
+        </div>
+      )}
 
       <div className="composer">
         {suggest.length > 0 && at && (

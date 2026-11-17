@@ -1,12 +1,12 @@
 import { useState } from 'react';
-import { MAX_CATEGORIES } from '../types';
 import type { Category, Channel, User } from '../types';
+import CategoryManager from './CategoryManager';
 
 interface Props {
   me: User; users: User[]; channels: Channel[]; categories: Category[]; unread: Record<string, number>; activeId: string | null;
   onSelect(id: string): void; onDm(userId: string): void;
   onCreate(name: string, ids: string[], categoryId: string | null): void;
-  onCreateCategory(name: string): void; onDeleteCategory(id: string): void;
+  onCreateCategory(name: string): void; onDeleteCategory(id: string): void; onRenameCategory(id: string, name: string): void;
   onMove(channelId: string, categoryId: string | null): void;
   onSignOut(): void; mode: 'demo' | 'live'; open: boolean;
 }
@@ -23,8 +23,7 @@ export default function Sidebar(p: Props) {
   const [creatingIn, setCreatingIn] = useState<string | null>(null);
   const [name, setName] = useState('');
   const [picked, setPicked] = useState<string[]>([]);
-  const [addingCat, setAddingCat] = useState(false);
-  const [catName, setCatName] = useState('');
+  const [managing, setManaging] = useState(false);
   const [folded, setFolded] = useState<Record<string, boolean>>({});
   const [menuFor, setMenuFor] = useState<string | null>(null); // 채널 ⋯ 메뉴
 
@@ -33,7 +32,6 @@ export default function Sidebar(p: Props) {
   const others = p.users.filter(u => u.id !== p.me.id);
   const catIds = new Set(p.categories.map(c => c.id));
   const uncategorized = chans.filter(c => !c.categoryId || !catIds.has(c.categoryId));
-  const canAddCat = p.categories.length < MAX_CATEGORIES;
 
   const total = (list: Channel[]) => list.reduce((n, c) => n + (p.unread[c.id] ?? 0), 0);
 
@@ -80,10 +78,6 @@ export default function Sidebar(p: Props) {
         {folded[key] && total(list) > 0 && <b className="count">{total(list)}</b>}
         <span className="spacer" />
         <button title="이 카테고리에 새 채널" onClick={e => { e.stopPropagation(); setCreatingIn(creatingIn === key ? null : key); setFolded({ ...folded, [key]: false }); }}>＋</button>
-        {cat && <button className="del" title="카테고리 삭제" onClick={e => {
-          e.stopPropagation();
-          if (confirm(`'${cat.name}' 카테고리를 삭제할까요?\n안의 채널은 삭제되지 않고 '카테고리 없음'으로 옮겨져요.`)) p.onDeleteCategory(cat.id);
-        }}>×</button>}
       </div>
       {!folded[key] && <>
         {createForm(key, cat ? cat.id : null)}
@@ -95,26 +89,18 @@ export default function Sidebar(p: Props) {
 
   return (
     <aside className={'sidebar' + (p.open ? ' open' : '')}>
-      <div className="brand"><span className="logo sm">구구</span> 구구메신저 {p.mode === 'demo' && <em className="badge">데모</em>}</div>
+      <div className="brand">
+        <img className="logo-img" src="./logo.png" alt="" /> <span>구구메신저</span> {p.mode === 'demo' && <em className="badge">데모</em>}
+        <span className="spacer" />
+        <button className="gear" onClick={() => setManaging(true)}>⚙ 카테고리</button>
+      </div>
+      {managing && <CategoryManager categories={p.categories} onAdd={p.onCreateCategory} onRename={p.onRenameCategory}
+        onDelete={p.onDeleteCategory} onClose={() => setManaging(false)} />}
 
       <div className="scrollarea">
         {p.categories.map(k => section(k.id, k.name, chans.filter(c => c.categoryId === k.id), k))}
         {(uncategorized.length > 0 || p.categories.length === 0 || creatingIn === NONE) &&
           section(NONE, p.categories.length ? '카테고리 없음' : '채널', uncategorized, null)}
-
-        <div className="addcat">
-          {addingCat ? (
-            <form onSubmit={e => { e.preventDefault(); if (catName.trim()) { p.onCreateCategory(catName); setCatName(''); setAddingCat(false); } }}>
-              <input placeholder="카테고리 이름 (예: 중등부)" value={catName} onChange={e => setCatName(e.target.value)} autoFocus maxLength={20} />
-              <button className="primary sm" disabled={!catName.trim()}>추가</button>
-              <button type="button" className="ghostbtn" onClick={() => { setAddingCat(false); setCatName(''); }}>취소</button>
-            </form>
-          ) : (
-            <button className="addcat-btn" disabled={!canAddCat} onClick={() => setAddingCat(true)}>
-              ＋ 카테고리 추가 <small>({p.categories.length}/{MAX_CATEGORIES})</small>
-            </button>
-          )}
-        </div>
 
         <div className="sec-head"><span>채팅 {dms.length || ''}</span></div>
         <ul>

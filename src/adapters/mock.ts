@@ -126,6 +126,14 @@ export class MockAdapter implements MessengerAdapter {
     cats.push({ id: uid(), name: name.trim() });
     this.emit({ type: 'categories' });
   }
+  async renameCategory(id: string, name: string) {
+    this.need();
+    this.state = load();
+    if (!name.trim()) throw new Error('카테고리 이름을 입력하세요');
+    const c = (this.state.categories ?? []).find(x => x.id === id);
+    if (c) c.name = name.trim();
+    this.emit({ type: 'categories' });
+  }
   async deleteCategory(id: string) {
     this.need();
     this.state = load();

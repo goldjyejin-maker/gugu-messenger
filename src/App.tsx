@@ -94,6 +94,7 @@ export default function App() {
         onDm={async id => { try { const c = await adapter.openDm(id); await refresh(); select(c.id); } catch (e) { fail(e); } }}
         onCreate={async (n, ids, cat) => { try { const c = await adapter.createChannel(n, ids, cat); await refresh(); select(c.id); } catch (e) { fail(e); } }}
         onCreateCategory={async n => { try { await adapter.createCategory(n); await refresh(); } catch (e) { fail(e); } }}
+        onRenameCategory={async (id, n) => { try { await adapter.renameCategory(id, n); await refresh(); } catch (e) { fail(e); } }}
         onDeleteCategory={async id => { try { await adapter.deleteCategory(id); await refresh(); } catch (e) { fail(e); } }}
         onMove={async (cid, cat) => { try { await adapter.setChannelCategory(cid, cat); await refresh(); } catch (e) { fail(e); } }}
         onSignOut={async () => { await adapter.signOut(); setMe(null); setActiveId(null); setChannels([]); setMessages([]); setNavOpen(!!mq?.matches); }} />

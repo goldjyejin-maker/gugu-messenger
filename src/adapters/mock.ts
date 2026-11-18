@@ -126,6 +126,13 @@ export class MockAdapter implements MessengerAdapter {
     cats.push({ id: uid(), name: name.trim() });
     this.emit({ type: 'categories' });
   }
+  async deleteChannel(id: string) {
+    this.need();
+    this.state = load();
+    this.state.channels = this.state.channels.filter(c => c.id !== id);
+    this.state.messages = this.state.messages.filter(m => m.channelId !== id);
+    this.emit({ type: 'channels' });
+  }
   async renameCategory(id: string, name: string) {
     this.need();
     this.state = load();

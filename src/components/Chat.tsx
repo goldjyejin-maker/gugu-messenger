@@ -2,7 +2,7 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import type { Message, User } from '../types';
 import { MAX_FILE, fmtDay, fmtSize, fmtTime, sameDay } from '../util';
 
-const EMOJIS = ['👍', '❤️', '😂', '🎉', '🙏'];
+const CHECK = '✅'; // '확인했어요' 표시는 이 이모지 하나로 저장한다
 const URL_RE = /(https?:\/\/[^\s<]+)/g;
 
 /** 본문: URL 링크화 + @멘션 강조 (React가 문자열을 이스케이프하므로 XSS 안전) */
@@ -33,7 +33,6 @@ export default function Chat({ me, users, memberIds, title, messages, onSend, on
   const [err, setErr] = useState('');
   const [sending, setSending] = useState(false);
   const [drag, setDrag] = useState(false);
-  const [sel, setSel] = useState<string | null>(null); // 터치: 메시지를 탭하면 반응/삭제 버튼 표시
   const [view, setView] = useState<{ list: string[]; i: number } | null>(null); // 사진 크게 보기
   const listRef = useRef<HTMLDivElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -92,7 +91,7 @@ export default function Chat({ me, users, memberIds, title, messages, onSend, on
           return (
             <Fragment key={m.id}>
               {showDay && <div className="day"><span>{fmtDay(m.createdAt)}</span></div>}
-              <div id={'m-' + m.id} onClick={() => setSel(sel === m.id ? null : m.id)} className={'msg' + (sel === m.id ? ' sel' : '') + (compact ? ' compact' : '') + (m.mentions.includes(me.id) ? ' mentioned' : '') + (focusId === m.id ? ' focus' : '')}>
+              <div id={'m-' + m.id} className={'msg' + (compact ? ' compact' : '') + (m.mentions.includes(me.id) ? ' mentioned' : '') + (focusId === m.id ? ' focus' : '')}>
                 <div className="avatar">{compact ? '' : (byId.get(m.userId)?.name ?? '?').slice(0, 1)}</div>
                 <div className="bubble">
                   {!compact && <div className="meta"><b>{byId.get(m.userId)?.name ?? '알 수 없음'}</b><time>{fmtTime(m.createdAt)}</time></div>}
@@ -103,7 +102,7 @@ export default function Chat({ me, users, memberIds, title, messages, onSend, on
                     const shown = imgs.slice(0, 4), more = imgs.length - shown.length;
                     return <>
                       {imgs.length > 0 && (
-                        <div className={'gallery g' + shown.length} onClick={e => e.stopPropagation()}>
+                        <div className={'gallery g' + shown.length} >
                           {shown.map((a, i) => (
                             <button key={a.id} className="tile" aria-label={a.name} onClick={() => setView({ list: imgs.map(x => x.url!), i })}>
                               <img src={a.url} alt={a.name} loading="lazy" />
@@ -115,15 +114,19 @@ export default function Chat({ me, users, memberIds, title, messages, onSend, on
                         <a key={a.id} className="file" href={a.url} download={a.name} target="_blank" rel="noopener noreferrer">📎 {a.name} <small>{fmtSize(a.size)}</small></a>)}
                     </>;
                   })()}
-                  <div className="reacts">
-                    {Object.entries(m.reactions).map(([e, ids]) => (
-                      <button key={e} className={ids.includes(me.id) ? 'on' : ''} onClick={() => onReact(m.id, e)}
-                        title={ids.map(i => byId.get(i)?.name).join(', ')}>{e} {ids.length}</button>))}
-                    <span className="tools">
-                      {EMOJIS.map(e => <button key={e} onClick={() => onReact(m.id, e)}>{e}</button>)}
-                      {mine && <button title="삭제" onClick={() => { if (confirm('이 메시지를 삭제할까요?')) onDelete(m.id); }}>🗑</button>}
-                    </span>
-                  </div>
+                  {(() => {
+                    const ok = m.reactions[CHECK] ?? [];
+                    const iOk = ok.includes(me.id);
+                    return (
+                      <div className="foot">
+                        <button className={'ack' + (iOk ? ' on' : '')} aria-pressed={iOk} onClick={() => onReact(m.id, CHECK)}>
+                          <span className="box">{iOk ? '✓' : ''}</span>확인{ok.length > 0 && <b>{ok.length}</b>}
+                        </button>
+                        {ok.length > 0 && <span className="who">{ok.map(i => byId.get(i)?.name).filter(Boolean).join(', ')}</span>}
+                        {mine && <button className="del" onClick={() => { if (confirm('이 메시지를 삭제할까요?')) onDelete(m.id); }}>삭제</button>}
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
             </Fragment>

@@ -86,6 +86,10 @@ export class SupabaseAdapter implements MessengerAdapter {
     const { error } = await this.sb.rpc('create_category', { p_name: name });
     if (error) throw new Error(error.message.includes('max_categories') ? `카테고리는 최대 ${MAX_CATEGORIES}개까지 만들 수 있어요` : error.message);
   }
+  async deleteChannel(id: string) {
+    const { error } = await this.sb.rpc('delete_channel', { p_id: id });
+    if (error) throw new Error(error.message.includes('delete_channel') ? '서버 업데이트(004_delete_channel.sql)가 필요해요' : error.message);
+  }
   async renameCategory(id: string, name: string) {
     const { error } = await this.sb.rpc('rename_category', { p_id: id, p_name: name });
     if (error) throw new Error(error.message.includes('rename_category') ? '서버 업데이트(003_rename_category.sql)가 필요해요' : error.message);

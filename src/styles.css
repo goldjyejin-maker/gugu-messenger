@@ -276,3 +276,25 @@ body { overscroll-behavior: none; }
 .lb-count { position: absolute; top: calc(18px + env(safe-area-inset-top)); left: 16px; color: #fff; font-size: 14px; }
 .lb-open { position: absolute; bottom: calc(18px + env(safe-area-inset-bottom)); color: #fff; font-size: 14px; border: 1px solid rgb(255 255 255 / .5); border-radius: 99px; padding: 8px 18px; text-decoration: none; }
 .login-logo, .logo-img { filter: brightness(1.04) contrast(1.06); }
+
+/* ───── 확인 체크박스 / 삭제 ───── */
+.foot { display: flex; align-items: center; gap: 8px; margin-top: 6px; flex-wrap: wrap; }
+.ack { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px 5px 7px; border: 1px solid var(--line); border-radius: 99px; background: #fff; color: var(--muted); font-size: 14px; }
+.ack .box { width: 20px; height: 20px; border: 2px solid #b9c5c1; border-radius: 5px; display: grid; place-items: center; color: #fff; font-size: 14px; font-weight: 800; line-height: 1; background: #fff; }
+.ack.on { border-color: #2e9d57; color: #1f7a42; background: #eef8f1; }
+.ack.on .box { background: #2e9d57; border-color: #2e9d57; }
+.ack b { font-weight: 700; }
+.who { font-size: 12px; color: var(--muted); }
+.foot .del { margin-left: auto; font-size: 13px; color: var(--muted); padding: 6px 8px; border-radius: 8px; }
+.foot .del:hover { background: #fdecea; color: var(--danger); }
+.moremenu button.danger { color: var(--danger); }
+.sidebar li .more { opacity: .6; }
+@media (max-width: 760px) {
+  .ack { font-size: 15px; padding: 7px 14px 7px 9px; }
+  .ack .box { width: 24px; height: 24px; }
+  .foot .del { font-size: 14px; padding: 8px 10px; }
+  .sec-head { padding: 20px 20px 6px; }
+  .create { padding: 6px 20px 12px; }
+  .create > input { padding: 12px; font-size: 16px; }
+  .cat-empty { padding: 8px 20px; font-size: 14px; }
+}

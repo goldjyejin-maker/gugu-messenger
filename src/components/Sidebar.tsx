@@ -75,6 +75,9 @@ export default function Sidebar(p: Props) {
         {rooms.length === 0 && !creating && <div className="cat-empty">채팅방이 없어요 · ＋ 를 눌러 만드세요</div>}
 
         <div className="sec-head"><span>1:1 채팅</span></div>
+        {others.length === 0
+          ? <div className="cat-empty">아직 가입한 다른 선생님이 없어요.<br />선생님이 가입하면 이름이 여기에 나타나고,<br />이름을 누르면 1:1 대화가 시작돼요.</div>
+          : dms.length === 0 && <div className="cat-empty">대화할 선생님 이름을 누르세요</div>}
         <ul>
           {dms.map(c => (
             <li key={c.id} className={c.id === p.activeId ? 'active' : ''} onClick={() => p.onSelect(c.id)}>

@@ -177,7 +177,7 @@ export default function Chat({ me, users, memberIds, title, messages, onSend, on
                 if (e.key === 'ArrowUp') { e.preventDefault(); setSugIdx((idx - 1 + suggest.length) % suggest.length); return; }
                 if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); pick(suggest[idx]); return; }
               }
-              if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void send(); }
+              // 그 외 Enter 는 줄바꿈(기본 동작). 전송은 '보내기' 버튼으로만 한다.
             }} />
           <button className="primary" disabled={sending} onClick={() => void send()}>{sending ? '…' : '보내기'}</button>
         </div>

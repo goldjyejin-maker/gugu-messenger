@@ -298,3 +298,10 @@ body { overscroll-behavior: none; }
   .create > input { padding: 12px; font-size: 16px; }
   .cat-empty { padding: 8px 20px; font-size: 14px; }
 }
+
+/* ───── 푸시 알림 안내 줄 ───── */
+.pushbar { display: flex; align-items: center; gap: 8px; justify-content: space-between; padding: 10px 16px; font-size: 13px; line-height: 1.45; border-top: 1px solid rgb(255 255 255 / .1); color: #cfe2db; }
+.pushbar.off { background: #2d5247; color: #fff; }
+.pushbar button { color: #cfe2db; text-decoration: underline; font-size: 13px; white-space: nowrap; }
+.pushbar button.pushgo { background: #f2c14e; color: #3b2d00; text-decoration: none; font-weight: 700; padding: 8px 14px; border-radius: 99px; }
+@media (max-width: 760px) { .pushbar { padding: 12px 20px; font-size: 14px; } .pushbar button { font-size: 14px; } }

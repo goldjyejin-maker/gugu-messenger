@@ -49,7 +49,8 @@ export interface MessengerAdapter {
 
   listCategories(): Promise<Category[]>;
   createCategory(name: string): Promise<void>;       // 최대 MAX_CATEGORIES개
-  deleteChannel(id: string): Promise<void>;          // 채팅방 삭제 (대화도 함께 삭제)
+  savePush(sub: { endpoint: string; p256dh: string; auth: string } | null, endpoint?: string): Promise<void>; // 푸시 알림 기기 등록/해제
+  deleteChannel(id: string): Promise<void>;         // 채팅방 삭제 (대화도 함께 삭제)
   renameCategory(id: string, name: string): Promise<void>;
   deleteCategory(id: string): Promise<void>;       // 속한 채널은 '카테고리 없음'으로 이동
   setChannelCategory(channelId: string, categoryId: string | null): Promise<void>;

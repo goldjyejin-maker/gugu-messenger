@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import type { Channel, User } from '../types';
+import type { PushState } from '../push';
 
 interface Props {
   me: User; users: User[]; channels: Channel[]; unread: Record<string, number>; activeId: string | null;
   onSelect(id: string): void; onDm(userId: string): void;
   onCreate(name: string, ids: string[]): void; onDelete(id: string): void;
   onSignOut(): void; mode: 'demo' | 'live'; open: boolean;
+  push: PushState; onTogglePush(): void;
 }
 
 export const dmName = (c: Channel, me: string, users: User[]) => {
@@ -89,6 +91,14 @@ export default function Sidebar(p: Props) {
         </ul>
       </div>
 
+      {p.mode === 'live' && p.push !== 'unsupported' && (
+        <div className={'pushbar ' + p.push}>
+          {p.push === 'on' && <><span>🔔 새 메시지 알림이 켜져 있어요</span><button onClick={p.onTogglePush}>끄기</button></>}
+          {p.push === 'off' && <><span>🔕 새 메시지를 알림으로 받으세요</span><button className="pushgo" onClick={p.onTogglePush}>알림 켜기</button></>}
+          {p.push === 'denied' && <span>🔕 알림이 차단돼 있어요. 폰 설정 → 이 앱 → 알림을 허용해 주세요</span>}
+          {p.push === 'need-install' && <span>🔕 알림을 받으려면 브라우저 메뉴의 <b>홈 화면에 추가</b> 후 그 아이콘으로 열어 주세요</span>}
+        </div>
+      )}
       <div className="me"><span>{p.me.name}</span><button onClick={p.onSignOut}>로그아웃</button></div>
     </aside>
   );

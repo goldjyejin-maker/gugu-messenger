@@ -6,6 +6,7 @@ import Sidebar, { dmName } from './components/Sidebar';
 import Chat from './components/Chat';
 import RightPanel from './components/RightPanel';
 import InstallTip from './components/InstallTip';
+import { clearBadge, disablePush, enablePush, pushState, resyncPush, type PushState } from './push';
 
 const adapter = createAdapter();
 type Tab = 'members' | 'files' | 'search';
@@ -56,6 +57,33 @@ export default function App() {
     return () => { off(); window.clearTimeout(t); };
   }, [me, refresh]);
 
+  // 푸시 알림: 상태 확인, 이미 허용된 기기는 조용히 재등록, 앱을 열면 아이콘 배지 지움
+  const [push, setPush] = useState<PushState>('unsupported');
+  useEffect(() => {
+    if (!me || adapter.kind === 'mock') return;
+    void resyncPush(adapter).then(pushState).then(setPush);
+    clearBadge();
+    const vis = () => { if (document.visibilityState === 'visible') clearBadge(); };
+    document.addEventListener('visibilitychange', vis);
+    return () => document.removeEventListener('visibilitychange', vis);
+  }, [me]);
+  const togglePush = async () => {
+    try {
+      if (push === 'on') await disablePush(adapter); else await enablePush(adapter);
+      setPush(await pushState());
+    } catch (e) { fail(e); setPush(await pushState()); }
+  };
+
+  // 알림을 눌러 앱을 열면 해당 대화방으로 이동
+  useEffect(() => {
+    if (!me) return;
+    const go = (id: string | null | undefined) => { if (id) { setActiveId(id); setFocusId(null); setNavOpen(false); } };
+    go(new URLSearchParams(location.search).get('c'));
+    const onMsg = (e: MessageEvent) => { if (e.data?.type === 'open-channel') go(e.data.channelId); };
+    navigator.serviceWorker?.addEventListener('message', onMsg);
+    return () => navigator.serviceWorker?.removeEventListener('message', onMsg);
+  }, [me]);
+
   // 기본으로 첫 채널 선택
   useEffect(() => {
     if (me && !activeId && channels.length && !mq?.matches) setActiveId(channels[0].id);
@@ -89,6 +117,7 @@ export default function App() {
     <div className="app">
       <Sidebar me={me} users={users} channels={channels} unread={unread} activeId={activeId} open={navOpen}
         mode={adapter.kind === 'mock' ? 'demo' : 'live'}
+        push={push} onTogglePush={togglePush}
         onSelect={select}
         onDm={async id => { try { const c = await adapter.openDm(id); await refresh(); select(c.id); } catch (e) { fail(e); } }}
         onCreate={async (n, ids) => { try { const c = await adapter.createChannel(n, ids); await refresh(); select(c.id); } catch (e) { fail(e); } }}

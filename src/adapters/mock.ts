@@ -126,6 +126,7 @@ export class MockAdapter implements MessengerAdapter {
     cats.push({ id: uid(), name: name.trim() });
     this.emit({ type: 'categories' });
   }
+  async savePush() { /* 데모 모드는 푸시 알림 없음 */ }
   async deleteChannel(id: string) {
     this.need();
     this.state = load();

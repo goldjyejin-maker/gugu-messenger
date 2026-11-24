@@ -76,3 +76,10 @@ supabase/schema.sql     테이블·RLS·RPC·스토리지 정책
 - 왼쪽은 **채팅방 목록**(＋로 새로 만들기, ⋯ → 삭제)과 **1:1 채팅** 두 부분뿐입니다. 카테고리 화면은 숨겼습니다(서버 기능은 남아 있음).
 - 메시지 아래에는 **☐ 확인** 체크박스(누른 사람 이름 표시)와 내 메시지의 **삭제**만 있습니다.
 - 채팅방 삭제를 쓰려면 `supabase/migrations/004_delete_channel.sql` 을 SQL Editor 에서 한 번 실행하세요.
+
+## 업데이트 #5 (푸시 알림)
+앱이 닫혀 있어도 새 메시지를 폰 알림으로 받습니다(무료: 브라우저 Web Push + Supabase Edge Function).
+1. `supabase/migrations/005_push.sql` 실행 (알림 기기 목록 + 새 메시지 감지 트리거)
+2. Edge Function `send-push` 배포 (`supabase/functions/send-push/index.ts`, **Verify JWT 끔**)
+3. Edge Functions → Secrets 에 `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` 등록 (비공개 키는 `vapid-keys.local.txt`, git 에 올라가지 않음)
+4. 폰: 홈 화면에 추가한 앱을 열고 사이드바 아래 **알림 켜기** → 허용. 아이폰은 iOS 16.4 이상 + 홈 화면 앱에서만 동작.

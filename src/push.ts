@@ -2,7 +2,7 @@ import type { MessengerAdapter } from './types';
 
 const KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY as string | undefined;
 
-export type PushState = 'unsupported' | 'need-install' | 'denied' | 'off' | 'on';
+export type PushState = 'checking' | 'unsupported' | 'need-install' | 'denied' | 'off' | 'on';
 
 const b64 = (s: string) => {
   const p = '='.repeat((4 - (s.length % 4)) % 4);
@@ -22,6 +22,12 @@ export async function pushState(): Promise<PushState> {
   if (Notification.permission !== 'granted') return 'off';
   const sub = await (await reg()).pushManager.getSubscription();
   return sub ? 'on' : 'off';
+}
+
+/** 알림을 켤 수 없을 때 화면에 보여 줄 진단 문구 */
+export function pushDebug(): string {
+  const f = (b: boolean) => (b ? 'O' : 'X');
+  return `키${f(!!KEY)} 서비스워커${f('serviceWorker' in navigator)} 알림${f('Notification' in window)} 푸시${f('PushManager' in window)} 홈화면앱${f(standalone())} iOS${f(isIos())}`;
 }
 
 function toRow(sub: PushSubscription) {

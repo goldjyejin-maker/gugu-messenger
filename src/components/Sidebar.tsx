@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { Channel, User } from '../types';
-import type { PushState } from '../push';
+import { pushDebug, type PushState } from '../push';
 
 interface Props {
   me: User; users: User[]; channels: Channel[]; unread: Record<string, number>; activeId: string | null;
@@ -91,10 +91,11 @@ export default function Sidebar(p: Props) {
         </ul>
       </div>
 
-      {p.mode === 'live' && p.push !== 'unsupported' && (
+      {p.mode === 'live' && (
         <div className={'pushbar ' + p.push}>
           {p.push === 'on' && <><span>🔔 새 메시지 알림이 켜져 있어요</span><button onClick={p.onTogglePush}>끄기</button></>}
           {p.push === 'off' && <><span>🔕 새 메시지를 알림으로 받으세요</span><button className="pushgo" onClick={p.onTogglePush}>알림 켜기</button></>}
+          {p.push === 'unsupported' && <span>🔕 이 폰·브라우저에서는 알림을 켤 수 없어요.<br /><small>아이폰은 iOS 16.4 이상, 홈 화면에 추가한 앱에서만 가능해요.<br />({pushDebug()})</small></span>}
           {p.push === 'denied' && <span>🔕 알림이 차단돼 있어요. 폰 설정 → 이 앱 → 알림을 허용해 주세요</span>}
           {p.push === 'need-install' && <span>🔕 알림을 받으려면 브라우저 메뉴의 <b>홈 화면에 추가</b> 후 그 아이콘으로 열어 주세요</span>}
         </div>

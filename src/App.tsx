@@ -58,7 +58,7 @@ export default function App() {
   }, [me, refresh]);
 
   // 푸시 알림: 상태 확인, 이미 허용된 기기는 조용히 재등록, 앱을 열면 아이콘 배지 지움
-  const [push, setPush] = useState<PushState>('unsupported');
+  const [push, setPush] = useState<PushState>('checking');
   useEffect(() => {
     if (!me || adapter.kind === 'mock') return;
     void resyncPush(adapter).then(pushState).then(setPush);
@@ -128,7 +128,7 @@ export default function App() {
             await refresh();
           } catch (e) { fail(e); }
         }}
-        onSignOut={async () => { await detachPush(adapter); await adapter.signOut(); setPush('unsupported'); setMe(null); setActiveId(null); setChannels([]); setMessages([]); setNavOpen(!!mq?.matches); }} />
+        onSignOut={async () => { await detachPush(adapter); await adapter.signOut(); setPush('checking'); setMe(null); setActiveId(null); setChannels([]); setMessages([]); setNavOpen(!!mq?.matches); }} />
       {navOpen && <div className="scrim" onClick={() => setNavOpen(false)} />}
       <InstallTip />
       {tab && <div className="rpanel-back" onClick={() => setTab(null)} />}

@@ -43,6 +43,15 @@ export async function disablePush(adapter: MessengerAdapter): Promise<void> {
   if (sub) { await adapter.savePush(null, sub.endpoint); await sub.unsubscribe(); }
 }
 
+/** 로그아웃할 때: 서버의 '이 기기 → 이 계정' 연결만 끊는다 (브라우저 알림 허용은 유지, 다음 로그인 때 다시 연결) */
+export async function detachPush(adapter: MessengerAdapter): Promise<void> {
+  try {
+    if (!KEY || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    const sub = await (await reg()).pushManager.getSubscription();
+    if (sub) await adapter.savePush(null, sub.endpoint);
+  } catch { /* 로그아웃은 막지 않는다 */ }
+}
+
 /** 이미 허용된 기기는 로그인할 때마다 조용히 다시 등록 (계정 전환·구독 갱신 대비) */
 export async function resyncPush(adapter: MessengerAdapter): Promise<void> {
   try {

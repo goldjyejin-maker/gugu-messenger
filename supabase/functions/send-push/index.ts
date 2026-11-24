@@ -36,7 +36,9 @@ Deno.serve(async req => {
     const body = text ? text.slice(0, 120) : (msg.attachments?.length ? '📎 파일을 보냈어요' : '새 메시지');
     const payload = JSON.stringify({ title, body, channelId: msg.channel_id, tag: msg.channel_id });
 
-    await Promise.all((subs ?? []).map(async s => {
+    // 알려진 푸시 서비스 주소로만 전송 (등록 시에도 검사하지만 한 번 더 확인)
+    const ALLOWED = /^https:\/\/(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)\//;
+    await Promise.all((subs ?? []).filter(s => ALLOWED.test(s.endpoint)).map(async s => {
       try {
         await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, payload);
       } catch (e) {

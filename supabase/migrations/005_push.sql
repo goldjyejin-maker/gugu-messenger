@@ -15,6 +15,10 @@ create or replace function public.save_push(p_endpoint text, p_p256dh text, p_au
 language plpgsql security definer set search_path = public as $$
 begin
   if auth.uid() is null then raise exception 'not_authenticated'; end if;
+  -- 알려진 푸시 서비스 주소만 허용 (서버가 임의의 주소로 요청을 보내는 것을 방지)
+  if p_endpoint !~ '^https://(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|web\.push\.apple\.com|[a-z0-9-]+\.notify\.windows\.com)/' then
+    raise exception 'invalid_endpoint';
+  end if;
   insert into push_subscriptions (endpoint, user_id, p256dh, auth) values (p_endpoint, auth.uid(), p_p256dh, p_auth)
   on conflict (endpoint) do update set user_id = auth.uid(), p256dh = excluded.p256dh, auth = excluded.auth;
 end $$;

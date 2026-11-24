@@ -6,7 +6,7 @@ import Sidebar, { dmName } from './components/Sidebar';
 import Chat from './components/Chat';
 import RightPanel from './components/RightPanel';
 import InstallTip from './components/InstallTip';
-import { clearBadge, disablePush, enablePush, pushState, resyncPush, type PushState } from './push';
+import { clearBadge, detachPush, disablePush, enablePush, pushState, resyncPush, type PushState } from './push';
 
 const adapter = createAdapter();
 type Tab = 'members' | 'files' | 'search';
@@ -128,7 +128,7 @@ export default function App() {
             await refresh();
           } catch (e) { fail(e); }
         }}
-        onSignOut={async () => { await adapter.signOut(); setMe(null); setActiveId(null); setChannels([]); setMessages([]); setNavOpen(!!mq?.matches); }} />
+        onSignOut={async () => { await detachPush(adapter); await adapter.signOut(); setPush('unsupported'); setMe(null); setActiveId(null); setChannels([]); setMessages([]); setNavOpen(!!mq?.matches); }} />
       {navOpen && <div className="scrim" onClick={() => setNavOpen(false)} />}
       <InstallTip />
       {tab && <div className="rpanel-back" onClick={() => setTab(null)} />}
